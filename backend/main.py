@@ -13,7 +13,7 @@ app = FastAPI(title="SmartVenue OS Mock IoT Server")
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
-    "https://smartvenue-frontend-mkofwsnbtq-uc.a.run.app"
+    "https://smartvenue-frontend-999304176716.us-central1.run.app"
 ]
 
 app.add_middleware(
