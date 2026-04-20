@@ -4,16 +4,27 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+import os
+import google.generativeai as genai
 
 app = FastAPI(title="SmartVenue OS Mock IoT Server")
 
+# Security Configuration
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://smartvenue-frontend-mkofwsnbtq-uc.a.run.app"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+STAFF_API_KEY = "smart-staff-2024" # In production, this would be an env var
 
 # Persistent State
 locations = ["Gate 1 Entrance", "Gate 2 Entrance", "Gate 3 Entrance", "Gate 4 Entrance", "Main Concourse", "East Wing", "West Wing"]
@@ -29,6 +40,15 @@ metrics_state = {
     "concessions": {name: random.randint(5, 10) for name in concession_stands},
     "restrooms": {loc: random.randint(10, 40) for loc in restroom_locations}
 }
+
+# AI Caching State
+ai_cache = {
+    "response": None,
+    "timestamp": 0,
+    "last_phase": None,
+    "last_density_snapshot": None
+}
+AI_CACHE_COOLDOWN = 90 # seconds
 
 # Event Clock Simulator
 # 10 real seconds = 1 match minute to make testing realistic.
@@ -165,11 +185,121 @@ def get_density():
 class ResolveReq(BaseModel):
     location: str
 
+from fastapi import Header, HTTPException, Depends
+
+async def verify_staff_token(x_staff_auth: str = Header(None)):
+    if x_staff_auth != STAFF_API_KEY:
+        raise HTTPException(status_code=403, detail="Unauthorized staff access")
+    return x_staff_auth
+
 @app.post("/api/density/resolve")
-def resolve_congestion(req: ResolveReq):
+def resolve_congestion(req: ResolveReq, auth: str = Depends(verify_staff_token)):
     density_state[req.location] = "Clear"
     density_overrides[req.location] = time.time() + 30 
     return {"status": "success", "message": f"{req.location} congestion resolved."}
+
+# Google Gemini Integration
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+
+@app.get("/api/ai/insights")
+async def get_ai_insights(auth: str = Depends(verify_staff_token)):
+    """
+    Uses Google Gemini to analyze current venue status and provides tactical advice.
+    """
+    match_minute, phase, clock_str, is_rush = get_current_match_time()
+    
+    # Prepare data for state comparison
+    density_snapshot = {loc: status for loc, status in density_state.items()}
+    
+    # Check if we can use the cache
+    now = time.time()
+    cache_age = now - ai_cache["timestamp"]
+    
+    # Significant change detection
+    phase_changed = phase != ai_cache["last_phase"]
+    new_congestion = False
+    if ai_cache["last_density_snapshot"]:
+        for loc, status in density_snapshot.items():
+            if status == "Congested" and ai_cache["last_density_snapshot"].get(loc) != "Congested":
+                new_congestion = True
+                break
+    
+    # If cache is valid AND nothing significant changed, return cached data
+    if ai_cache["response"] and cache_age < AI_CACHE_COOLDOWN and not phase_changed and not new_congestion:
+        print(f"Returning cached AI insights (Age: {int(cache_age)}s)")
+        return {**ai_cache["response"], "mode": "cached", "cache_age": int(cache_age)}
+
+    # Prepare data for Gemini
+    venue_snapshot = {
+        "phase": phase,
+        "match_minute": match_minute,
+        "is_halftime_rush": is_rush,
+        "concessions": [{"name": k, "wait": v} for k, v in metrics_state["concessions"].items()],
+        "density": [{"loc": k, "status": v} for k, v in density_state.items()]
+    }
+
+    prompt = f"""
+    You are a Strategic Stadium Operations AI. Analyze this venue data:
+    {venue_snapshot}
+    
+    Provide 3 concise, high-impact tactical recommendations for stadium staff in JSON format:
+    {{ "recommendations": ["string", "string", "string"], "critical_alert": "string or null" }}
+    Focus on crowd safety and fan experience.
+    """
+
+    if not GEMINI_API_KEY:
+        # Fallback Mock AI if no key is provided
+        print("No GEMINI_API_KEY found. Using mock AI.")
+        result = {
+            "recommendations": [
+                f"Prepare for {phase} transition. Staff checkpoints at Gate 2.",
+                "Reroute concourse traffic to East Wing to balance wait times.",
+                "Deploy hydration teams to high-density zones."
+            ],
+            "critical_alert": "Congestion detected at Gate 2 Entrance" if density_state.get("Gate 2 Entrance") == "Congested" else None,
+        }
+        # Update cache even for mock so behavior is consistent
+        ai_cache.update({
+            "response": result,
+            "timestamp": now,
+            "last_phase": phase,
+            "last_density_snapshot": density_snapshot
+        })
+        return {**result, "mode": "mock"}
+
+    try:
+        print(f"Requesting Live AI Insight (Trigger: {'Phase Change' if phase_changed else 'New Congestion' if new_congestion else 'Timer Expired'})")
+        model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
+        response = model.generate_content(prompt)
+        
+        content = response.text
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+
+        import json
+        try:
+            insight_data = json.loads(content)
+            # Successfully got live insight, cache it
+            ai_cache.update({
+                "response": insight_data,
+                "timestamp": now,
+                "last_phase": phase,
+                "last_density_snapshot": density_snapshot
+            })
+            return {**insight_data, "mode": "live"}
+        except:
+            return {
+                "recommendations": [content[:200] + "..."],
+                "critical_alert": None,
+                "mode": "live_raw"
+            }
+    except Exception as e:
+        print(f"Exception: {e}")
+        return {"error": str(e), "mode": "error"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

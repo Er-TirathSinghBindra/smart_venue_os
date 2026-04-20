@@ -42,20 +42,40 @@ export default function VenueMap({ mode, densityData = [], concessionsData = [] 
       <div className="stadium-layout">
         {/* Top/North Side */}
         <div className="stadium-row">
-          <div className={`map-block ${mode === "staff" ? getStaffBlockClass("Gate 3 Entrance") : ""}`}>
+          <div 
+            className={`map-block ${mode === "staff" ? getStaffBlockClass("Gate 3 Entrance") : ""}`}
+            role="region"
+            aria-label={`Gate 3 Entrance: ${mode === "staff" ? getDensityStatus("Gate 3 Entrance") : "Information"}`}
+            tabIndex={0}
+          >
             Gate 3
           </div>
-          <div className={`map-block primary-concourse ${mode === "staff" ? getStaffBlockClass("Main Concourse") : ""}`}>
+          <div 
+            className={`map-block primary-concourse ${mode === "staff" ? getStaffBlockClass("Main Concourse") : ""}`}
+            role="region"
+            aria-label={`Main Concourse: ${mode === "staff" ? getDensityStatus("Main Concourse") : "Information"}`}
+            tabIndex={0}
+          >
             Main Concourse
           </div>
-          <div className={`map-block ${mode === "staff" ? getStaffBlockClass("Gate 4 Entrance") : ""}`}>
+          <div 
+            className={`map-block ${mode === "staff" ? getStaffBlockClass("Gate 4 Entrance") : ""}`}
+            role="region"
+            aria-label={`Gate 4 Entrance: ${mode === "staff" ? getDensityStatus("Gate 4 Entrance") : "Information"}`}
+            tabIndex={0}
+          >
             Gate 4
           </div>
         </div>
 
         {/* Middle/Field Area */}
         <div className="stadium-row field-row">
-          <div className={`map-block vertical-block ${mode === "staff" ? getStaffBlockClass("East Wing") : ""}`}>
+          <div 
+            className={`map-block vertical-block ${mode === "staff" ? getStaffBlockClass("East Wing") : ""}`}
+            role="region"
+            aria-label={`East Wing: ${mode === "staff" ? getDensityStatus("East Wing") : "Information"}`}
+            tabIndex={0}
+          >
             East Wing
             {mode === "attendee" && (
               <div className={`mini-stand ${getAttendeeConcessionClass("Pizza Slice - East Wing")}`}>
@@ -64,7 +84,7 @@ export default function VenueMap({ mode, densityData = [], concessionsData = [] 
             )}
           </div>
           
-          <div className="stadium-field">
+          <div className="stadium-field" role="img" aria-label="Stadium Field Area">
              FIELD
              {mode === "attendee" && (
                <div style={{ position: "absolute", top: "10%", left: "50%", transform: "translateX(-50%)" }} className={`mini-stand ${getAttendeeConcessionClass("Main Concourse Burgers")}`}>
@@ -73,7 +93,12 @@ export default function VenueMap({ mode, densityData = [], concessionsData = [] 
              )}
           </div>
           
-          <div className={`map-block vertical-block ${mode === "staff" ? getStaffBlockClass("West Wing") : ""}`}>
+          <div 
+            className={`map-block vertical-block ${mode === "staff" ? getStaffBlockClass("West Wing") : ""}`}
+            role="region"
+            aria-label={`West Wing: ${mode === "staff" ? getDensityStatus("West Wing") : "Information"}`}
+            tabIndex={0}
+          >
             West Wing
             {mode === "attendee" && (
               <div className={`mini-stand ${getAttendeeConcessionClass("Beer Stand 1")}`}>
@@ -85,7 +110,13 @@ export default function VenueMap({ mode, densityData = [], concessionsData = [] 
 
         {/* Bottom/South Side */}
         <div className="stadium-row">
-          <div className={`map-block ${mode === "staff" ? getStaffBlockClass("Gate 1 Entrance") : ""}`} style={{ position: "relative" }}>
+          <div 
+            className={`map-block ${mode === "staff" ? getStaffBlockClass("Gate 1 Entrance") : ""}`} 
+            style={{ position: "relative" }}
+            role="region"
+            aria-label={`Gate 1 Entrance: ${mode === "staff" ? getDensityStatus("Gate 1 Entrance") : "Information"}`}
+            tabIndex={0}
+          >
             Gate 1
             {mode === "attendee" && (
               <div className="you-are-here">
@@ -95,7 +126,12 @@ export default function VenueMap({ mode, densityData = [], concessionsData = [] 
             )}
           </div>
           
-          <div className="map-block">
+          <div 
+            className="map-block"
+            role="region"
+            aria-label="South Concourse"
+            tabIndex={0}
+          >
              South Concourse
              {mode === "attendee" && (
                <div className={`mini-stand ${getAttendeeConcessionClass("VIP Lounge Bar")}`}>
@@ -104,7 +140,12 @@ export default function VenueMap({ mode, densityData = [], concessionsData = [] 
              )}
           </div>
           
-          <div className={`map-block ${mode === "staff" ? getStaffBlockClass("Gate 2 Entrance") : ""}`}>
+          <div 
+            className={`map-block ${mode === "staff" ? getStaffBlockClass("Gate 2 Entrance") : ""}`}
+            role="region"
+            aria-label={`Gate 2 Entrance: ${mode === "staff" ? getDensityStatus("Gate 2 Entrance") : "Information"}`}
+            tabIndex={0}
+          >
             Gate 2
           </div>
         </div>

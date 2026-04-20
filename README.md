@@ -46,11 +46,18 @@ The solution is divided into three distinct interfaces, each serving a unique pe
     - **Goal**: High-throughput crowd steering.
     - **Feature**: A "Blink-Alert" system that automatically triggers when sectors reach critical congestion levels.
 
+4.  **AI Co-Pilot (Google Gemini Integration)**:
+    - **Persona**: Strategic Operations Commander.
+    - **Goal**: Predictive and tactical decision support.
+    - **Feature**: Real-time analysis of venue telemetry by **Google Gemini 1.5 Flash** to provide actionable staff recommendations (e.g., "Reroute Gate 2 traffic before Halftime rush").
+
 ## ⚡ Performance & Localization
 
 -   **Currency Localization**: Built for international contexts with full support for **Indian Rupee (₹)** symbol formatting.
 -   **Responsive Geometry**: The Attendee and Staff dashboards use an adaptive **Horizontal Grid Layout** on desktop (1024px+) while collapsing to a streamlined vertical view for mobile devices.
 -   **Real-time Polling**: Efficient `setInterval` polling ensures the UI reflects simulation changes within 3-5 seconds without overloading the backend.
+-   **Accessibility (A11y)**: Fully compliant with ARIA standards. The Venue Map features semantic regions, aria-labels, and keyboard navigability (`tabIndex`) for screen-reader users.
+-   **Hardened Security**: Staff operations are protected by a header-based authentication layer (`X-Staff-Auth`), and the API uses restricted CORS policies for production safety.
 
 
 ## 🎯 Chosen Vertical: Smart Venue & Event Operations
@@ -82,7 +89,8 @@ The system is built as a **Cyber-Physical System (CPS)** loop:
 - **Persistent Connectivity**: The prototype assumes a stable network connection between the dashboards and the backend (no offline-first logic).
 - **Volatile State**: To keep the prototype lightweight, all state is stored in-memory. Restarting the backend service resets the match clock and all metrics.
 - **Simplified IoT**: Total occupancy in restrooms/concessions is simulated as a percentage-based "jitter" around a moving average rather than individual guest tracking.
-- **Role-Based Access**: For simulation purposes, the "Staff" and "Attendee" views are accessible via a simple toggle; in a production system, these would be behind strictly separate authentication layers.
+- **Role-Based Access**: The "Staff" dashboard requires a valid `X-Staff-Auth` header. For the prototype, this is hardcoded as `smart-staff-2024`.
+- **Stateless Intelligence**: The AI Co-Pilot does not retain memory of past chats; it provides point-in-time tactical advice based on the current telemetry snapshot.
 
 ---
 
@@ -90,6 +98,8 @@ The system is built as a **Cyber-Physical System (CPS)** loop:
 
 - **Backend**: Python, FastAPI, Uvicorn (Simulation & API).
 - **Frontend**: Next.js 15+, TypeScript, Lucide Icons, CSS Grid/Flexbox.
+- **AI Intelligence**: **Google Gemini 1.5 Flash** (Generative AI for tactical insights).
+- **Testing**: Pytest (Backend) & Vitest (Frontend).
 - **Cloud Architecture**: Containerized services with Docker & Google Cloud Run.
 
 ## 📦 Project Structure
@@ -135,8 +145,14 @@ The project is architected for rapid deployment to Google Cloud Run.
    ```bash
    cd backend
    pip install -r requirements.txt
+   # Set your Gemini API Key
+   export GEMINI_API_KEY="your-key-here"
    uvicorn main:app --reload
    ```
+
+2. **Automated Testing**:
+   - **Backend**: `cd backend && pytest`
+   - **Frontend**: `cd frontend && npm test`
 
 2. **Frontend**:
    ```bash
