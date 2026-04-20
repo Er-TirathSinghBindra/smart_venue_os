@@ -6,19 +6,46 @@ from pydantic import BaseModel
 import uvicorn
 import os
 import google.generativeai as genai
+from google.cloud import firestore
+from google.cloud import logging as cloud_logging
+import logging
 
 app = FastAPI(title="SmartVenue OS Mock IoT Server")
 
+# Silence favicon 404 logs
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return {}
+
+# 1. Initialize Google Cloud Logging
+try:
+    log_client = cloud_logging.Client()
+    log_client.setup_logging()
+    logging.info("Cloud Logging initialized successfully.")
+except Exception as e:
+    print(f"Local logging fallback: {e}")
+    logging.basicConfig(level=logging.INFO)
+
+# 2. Initialize Firestore
+db = None
+try:
+    # This will look for GOOGLE_APPLICATION_CREDENTIALS or use metadata server in Cloud Run
+    db = firestore.Client()
+    logging.info("Firestore client initialized.")
+except Exception as e:
+    logging.warning(f"Firestore not initialized (running locally without creds?): {e}")
+
+# Frontend URL read
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 # Security Configuration
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://smartvenue-frontend-999304176716.us-central1.run.app"
-]
+# Using allow_origin_regex to permit any Cloud Run service (ending in .run.app)
+# This solves the circular dependency problem during deployment.
+ALLOWED_ORIGIN_REGEX = r"https://.*\.run\.app|http://(localhost|127\.0\.0\.1):300[0-9]"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
@@ -83,6 +110,16 @@ def get_current_match_time():
         
     return match_minute, phase, clock_str, is_halftime_rush
 
+def sync_to_firestore(collection: str, document: str, data: dict):
+    """
+    Helper to sync state to Firestore for persistent monitoring.
+    """
+    if db:
+        try:
+            db.collection(collection).document(document).set(data)
+        except Exception as e:
+            logging.error(f"Firestore sync failed for {document}: {e}")
+
 
 @app.get("/api/clock")
 def get_clock():
@@ -145,6 +182,10 @@ def get_concessions():
         if current > 22: status = "Very Busy"
         
         data.append({"name": name, "wait_time_minutes": current, "status": status})
+    
+    # Sync to Firestore (Google Service integration)
+    sync_to_firestore("venue_telemetry", "concessions", {"data": data, "timestamp": firestore.SERVER_TIMESTAMP})
+    
     return {"concessions": data}
 
 @app.get("/api/restrooms")
@@ -173,6 +214,10 @@ def get_restrooms():
         elif current > 50: status = "Moderate"
         
         data.append({"location": loc, "occupancy_percent": current, "status": status})
+    
+    # Sync to Firestore (Google Service integration)
+    sync_to_firestore("venue_telemetry", "restrooms", {"data": data, "timestamp": firestore.SERVER_TIMESTAMP})
+    
     return {"restrooms": data}
 
 @app.get("/api/density")
@@ -180,6 +225,10 @@ def get_density():
     match_minute, phase, clock_str, is_rush = get_current_match_time()
     update_density(is_rush)
     data = [{"location": loc, "status": density_state[loc]} for loc in locations]
+    
+    # Sync to Firestore (Google Service integration)
+    sync_to_firestore("venue_telemetry", "density", {"data": data, "timestamp": firestore.SERVER_TIMESTAMP})
+    
     return {"density": data}
 
 class ResolveReq(BaseModel):
@@ -228,7 +277,7 @@ async def get_ai_insights(auth: str = Depends(verify_staff_token)):
     
     # If cache is valid AND nothing significant changed, return cached data
     if ai_cache["response"] and cache_age < AI_CACHE_COOLDOWN and not phase_changed and not new_congestion:
-        print(f"Returning cached AI insights (Age: {int(cache_age)}s)")
+        logging.info(f"Returning cached AI insights (Age: {int(cache_age)}s)")
         return {**ai_cache["response"], "mode": "cached", "cache_age": int(cache_age)}
 
     # Prepare data for Gemini
@@ -270,7 +319,7 @@ async def get_ai_insights(auth: str = Depends(verify_staff_token)):
         return {**result, "mode": "mock"}
 
     try:
-        print(f"Requesting Live AI Insight (Trigger: {'Phase Change' if phase_changed else 'New Congestion' if new_congestion else 'Timer Expired'})")
+        logging.info(f"Requesting Live AI Insight (Trigger: {'Phase Change' if phase_changed else 'New Congestion' if new_congestion else 'Timer Expired'})")
         model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
         response = model.generate_content(prompt)
         

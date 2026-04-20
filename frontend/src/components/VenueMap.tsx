@@ -1,5 +1,7 @@
-import React from "react";
-import { MapPin } from "lucide-react";
+import React, { useState } from "react";
+import { MapPin, Info, Globe } from "lucide-react";
+import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import { GOOGLE_MAPS_API_KEY } from "../config";
 
 interface VenueMapProps {
   mode: "attendee" | "staff";
@@ -7,7 +9,27 @@ interface VenueMapProps {
   concessionsData?: any[];
 }
 
+const STADIUM_CENTER = { lat: 23.0919, lng: 72.5975 }; // Narendra Modi Stadium
+const mapContainerStyle = {
+  width: "100%",
+  height: "250px",
+  borderRadius: "12px",
+  marginTop: "1rem"
+};
+
 export default function VenueMap({ mode, densityData = [], concessionsData = [] }: VenueMapProps) {
+  const [showRealMap, setShowRealMap] = useState(false);
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY
+  });
+
+  const gateMarkers = [
+    { name: "Gate 1", pos: { lat: 23.0910, lng: 72.5970 } },
+    { name: "Gate 2", pos: { lat: 23.0910, lng: 72.5980 } },
+    { name: "Gate 3", pos: { lat: 23.0925, lng: 72.5970 } },
+    { name: "Gate 4", pos: { lat: 23.0925, lng: 72.5980 } },
+  ];
   // Helper to get density status for a specific location
   const getDensityStatus = (locationName: string) => {
     const loc = densityData.find((d) => d.location === locationName);
@@ -37,9 +59,20 @@ export default function VenueMap({ mode, densityData = [], concessionsData = [] 
 
   return (
     <div className="venue-map-container glass-panel" style={{ padding: "1.5rem", position: "relative", overflow: "hidden" }}>
-      <h3 className="title-gradient" style={{ marginBottom: "1rem" }}>Live Venue Map</h3>
-      
-      <div className="stadium-layout">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <h3 className="title-gradient" style={{ margin: 0 }}>Live Venue Map</h3>
+        <button 
+          className="staff-action-btn" 
+          onClick={() => setShowRealMap(!showRealMap)}
+          style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
+        >
+          {showRealMap ? <Info size={14} /> : <Globe size={14} />}
+          {showRealMap ? "Show Schematic" : "Show Satellite Context"}
+        </button>
+      </div>
+
+      {!showRealMap ? (
+        <>
         {/* Top/North Side */}
         <div className="stadium-row">
           <div 
@@ -149,7 +182,27 @@ export default function VenueMap({ mode, densityData = [], concessionsData = [] 
             Gate 2
           </div>
         </div>
-      </div>
+      </>
+    ) : (
+        <div className="google-map-wrapper">
+          {isLoaded ? (
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
+              center={STADIUM_CENTER}
+              zoom={17}
+              options={{ mapTypeId: 'satellite', disableDefaultUI: true }}
+            >
+              {gateMarkers.map(m => (
+                <Marker key={m.name} position={m.pos} label={m.name} />
+              ))}
+            </GoogleMap>
+          ) : (
+            <div style={{ height: "250px", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)" }}>
+              Loading Google Maps Context...
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Legend */}
       <div className="map-legend">

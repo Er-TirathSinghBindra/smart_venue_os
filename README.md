@@ -8,8 +8,15 @@ SmartVenue OS operates as a **Cyber-Physical System (CPS)** loop where the virtu
 
 ```mermaid
 graph TD
+    subgraph "Google Cloud Platform"
+        DB[(Firebase Firestore)]
+        LOG[Cloud Logging]
+    end
+
     subgraph "Backend (Python/FastAPI)"
         SIM[Match Simulator] -->|Real-time Metrics| API[FastAPI JSON Endpoints]
+        API -->|Sync| DB
+        SIM -->|Events| LOG
         API -->|Override Signals| SIM
     end
 
@@ -17,6 +24,7 @@ graph TD
         API -->|Wait Times/Occupancy| ATD[Attendee Dashboard]
         API -->|Congestion Alerts| STF[Staff Dashboard]
         API -->|Routing Data| SIG[Signage Dashboard]
+        ATD -->|Geo-Context| MAP[Google Maps SDK]
         
         STF -->|Resolution Actions| API
     end
@@ -57,7 +65,8 @@ The solution is divided into three distinct interfaces, each serving a unique pe
 -   **Responsive Geometry**: The Attendee and Staff dashboards use an adaptive **Horizontal Grid Layout** on desktop (1024px+) while collapsing to a streamlined vertical view for mobile devices.
 -   **Real-time Polling**: Efficient `setInterval` polling ensures the UI reflects simulation changes within 3-5 seconds without overloading the backend.
 -   **Accessibility (A11y)**: Fully compliant with ARIA standards. The Venue Map features semantic regions, aria-labels, and keyboard navigability (`tabIndex`) for screen-reader users.
--   **Hardened Security**: Staff operations are protected by a header-based authentication layer (`X-Staff-Auth`), and the API uses restricted CORS policies for production safety.
+-   **Observability**: Integrated with **Google Cloud Logging** for structured backend event tracking.
+-   **Security**: Staff operations are protected by a header-based authentication layer (`X-Staff-Auth`), and the API uses restricted CORS policies (including dynamic `.run.app` matching) for production safety.
 
 
 ## 🎯 Chosen Vertical: Smart Venue & Event Operations
@@ -79,15 +88,17 @@ The system is built as a **Cyber-Physical System (CPS)** loop:
 
 ## 🔄 How it Works
 
-1. **State Generation**: The Backend Simulator (`main.py`) maintains an in-memory state of the venue. It constantly updates wait times and occupancy based on the current "Match Minute".
-2. **API Delivery**: A FastAPI layer serves this state via non-blocking async endpoints.
-3. **Reactive UI**: The Frontend Dashboards (Attendee, Staff, Signage) poll the API. The UI is built with **CSS Grid** for extreme responsiveness and **Glassmorphism** for a modern, premium aesthetic.
-4. **Dynamic Signage**: The Signage Dashboards calculate "Alternate Routes" on-the-fly. If a gate is congested, the signage logic identifies the nearest clear exit and updates the overhead display automatically.
+1. **State Generation**: The Backend Simulator (`main.py`) maintains a state of the venue. It constantly updates wait times and occupancy based on the current "Match Minute".
+2. **Cloud Persistence**: Simulation telemetry is automatically synced to **Firebase Firestore**, ensuring that the stadium status is preserved across backend restarts.
+3. **API Delivery**: A FastAPI layer serves this state via non-blocking async endpoints.
+4. **Reactive UI**: The Frontend Dashboards (Attendee, Staff, Signage) poll the API. The UI is built with **CSS Grid** for extreme responsiveness and **Glassmorphism** for a modern, premium aesthetic.
+5. **Geographic Context**: Integration with **Google Maps Platform** allows users to toggle a "Satellite Canvas" view of the stadium (Narendra Modi Stadium) to see gate positions in real-world coordinates.
+6. **Dynamic Signage**: The Signage Dashboards calculate "Alternate Routes" on-the-fly. If a gate is congested, the signage logic identifies the nearest clear exit and updates the overhead display automatically.
 
 ## 📝 Assumptions
 
 - **Persistent Connectivity**: The prototype assumes a stable network connection between the dashboards and the backend (no offline-first logic).
-- **Volatile State**: To keep the prototype lightweight, all state is stored in-memory. Restarting the backend service resets the match clock and all metrics.
+- **Persistent State**: Unlike traditional volatile prototypes, this version uses **Firebase Firestore** to maintain telemetry across service cycles.
 - **Simplified IoT**: Total occupancy in restrooms/concessions is simulated as a percentage-based "jitter" around a moving average rather than individual guest tracking.
 - **Role-Based Access**: The "Staff" dashboard requires a valid `X-Staff-Auth` header. For the prototype, this is hardcoded as `smart-staff-2024`.
 - **Stateless Intelligence**: The AI Co-Pilot does not retain memory of past chats; it provides point-in-time tactical advice based on the current telemetry snapshot.
@@ -96,8 +107,8 @@ The system is built as a **Cyber-Physical System (CPS)** loop:
 
 ## 🛠️ Technology Stack
 
-- **Backend**: Python, FastAPI, Uvicorn (Simulation & API).
-- **Frontend**: Next.js 15+, TypeScript, Lucide Icons, CSS Grid/Flexbox.
+- **Backend**: Python, FastAPI, Uvicorn, **Firebase Firestore**, **Google Cloud Logging**.
+- **Frontend**: Next.js 15+, TypeScript, **Google Maps SDK**, Lucide Icons, CSS Grid/Flexbox.
 - **AI Intelligence**: **Google Gemini 3.1 Flash Lite** (Generative AI for tactical insights).
 - **Testing**: Pytest (Backend) & Vitest (Frontend).
 - **Cloud Architecture**: Containerized services with Docker & Google Cloud Run.
@@ -141,7 +152,11 @@ The project is architected for rapid deployment to Google Cloud Run.
 2. Navigate to the `frontend/` directory.
 3. Deploy to Cloud Run:
    ```bash
-   gcloud run deploy smartvenue-frontend --source . --region us-central1 --allow-unauthenticated
+   gcloud run deploy smartvenue-frontend \
+     --source . \
+     --region us-central1 \
+     --set-env-vars="NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-maps-key,NEXT_PUBLIC_BACKEND_URL=your-backend-url" \
+     --allow-unauthenticated
    ```
 
 ## 🛠️ Local Development
