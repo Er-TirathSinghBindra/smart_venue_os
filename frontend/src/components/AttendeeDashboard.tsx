@@ -33,10 +33,10 @@ export default function AttendeeDashboard() {
   }, []);
 
   const menuItems = [
-    { id: "1", name: "Stadium Hotdog", price: 8 },
-    { id: "2", name: "Craft Beer", price: 12 },
-    { id: "3", name: "Jumbo Pretzel", price: 6 },
-    { id: "4", name: "Classic Nachos", price: 7 },
+    { id: "1", name: "Samosa (2pcs) & Chai", price: 40 },
+    { id: "2", name: "Vada Pav Junction", price: 30 },
+    { id: "3", name: "Butter Chicken Roll", price: 120 },
+    { id: "4", name: "Paneer Tikka Platter", price: 150 },
   ];
 
   const addToCart = (item: any) => {

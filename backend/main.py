@@ -22,7 +22,7 @@ density_overrides = {}
 density_state["Gate 2 Entrance"] = "Congested"
 
 # Persistent Metrics State (Inertia)
-concession_stands = ["Main Concourse Burgers", "Beer Stand 1", "VIP Lounge Bar", "Level 2 Hotdogs", "Pizza Slice - East Wing"]
+concession_stands = ["Masala Chai & Samosas", "Vada Pav Junction", "VIP Tandoori Hub", "Butter Chicken Bowls", "Paneer Tikka Express"]
 restroom_locations = ["Gate A Mens", "Gate A Womens", "Concourse B Family", "VIP Restroom", "Concourse C Mens", "Concourse C Womens"]
 
 metrics_state = {
