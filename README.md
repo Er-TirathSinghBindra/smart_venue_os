@@ -138,11 +138,11 @@ The project is architected for rapid deployment to Google Cloud Run.
 1. Navigate to the `backend/` directory.
 2. Deploy to Cloud Run:
    ```bash
-   gcloud run deploy smartvenue-backend \
-     --source . \
-     --region us-central1 \
-     --service-account="your-service-account@project.iam.gserviceaccount.com" \
-     --set-env-vars="GEMINI_API_KEY=your-api-key" \
+   gcloud run deploy smartvenue-backend `
+     --source . `
+     --region us-central1 `
+     --service-account="your-service-account@project.iam.gserviceaccount.com" `
+     --set-env-vars="GEMINI_API_KEY=your-api-key" `
      --allow-unauthenticated
    ```
 3. Copy the generated **Service URL**.
@@ -152,10 +152,10 @@ The project is architected for rapid deployment to Google Cloud Run.
 2. Navigate to the `frontend/` directory.
 3. Deploy to Cloud Run:
    ```bash
-   gcloud run deploy smartvenue-frontend \
-     --source . \
-     --region us-central1 \
-     --set-env-vars="NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-maps-key,NEXT_PUBLIC_BACKEND_URL=your-backend-url" \
+   gcloud run deploy smartvenue-frontend `
+     --source . `
+     --region us-central1 `
+     --set-env-vars="NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-maps-key,NEXT_PUBLIC_BACKEND_URL=your-backend-url" `
      --allow-unauthenticated
    ```
 
@@ -165,8 +165,8 @@ The project is architected for rapid deployment to Google Cloud Run.
    ```bash
    cd backend
    pip install -r requirements.txt
-   # Set your Gemini API Key
-   export GEMINI_API_KEY="your-key-here"
+   # Set your Gemini API Key (PowerShell syntax)
+   $env:GEMINI_API_KEY="your-key-here"
    uvicorn main:app --reload
    ```
 
@@ -175,9 +175,12 @@ The project is architected for rapid deployment to Google Cloud Run.
    - **Frontend**: `cd frontend && npm test`
 
 2. **Frontend**:
-   ```bash
+   ```powershell
    cd frontend
    npm install
+   # Set your API keys (PowerShell syntax)
+   $env:NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your-key-here"
+   $env:NEXT_PUBLIC_BACKEND_URL="http://127.0.0.1:8000"
    npm run dev
    ```
 
