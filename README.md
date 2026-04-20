@@ -153,7 +153,7 @@ The project is architected for rapid deployment to Google Cloud Run.
 3. Deploy to Cloud Run:
    ```powershell
    gcloud run deploy smartvenue-frontend --source . --region us-central1 --allow-unauthenticated `
-     --set-env-vars="NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyB-ETVlhWM9_WE9Osaq2l7t2SwDoJ35bx4"
+     --set-env-vars="NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=<Your-API-Key>"
    ```
 
 ## 🛠️ Local Development
