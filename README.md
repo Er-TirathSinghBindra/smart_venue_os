@@ -98,7 +98,7 @@ The system is built as a **Cyber-Physical System (CPS)** loop:
 
 - **Backend**: Python, FastAPI, Uvicorn (Simulation & API).
 - **Frontend**: Next.js 15+, TypeScript, Lucide Icons, CSS Grid/Flexbox.
-- **AI Intelligence**: **Google Gemini 1.5 Flash** (Generative AI for tactical insights).
+- **AI Intelligence**: **Google Gemini 3.1 Flash Lite** (Generative AI for tactical insights).
 - **Testing**: Pytest (Backend) & Vitest (Frontend).
 - **Cloud Architecture**: Containerized services with Docker & Google Cloud Run.
 
@@ -127,7 +127,12 @@ The project is architected for rapid deployment to Google Cloud Run.
 1. Navigate to the `backend/` directory.
 2. Deploy to Cloud Run:
    ```bash
-   gcloud run deploy smartvenue-backend --source . --region us-central1 --allow-unauthenticated
+   gcloud run deploy smartvenue-backend \
+     --source . \
+     --region us-central1 \
+     --service-account="your-service-account@project.iam.gserviceaccount.com" \
+     --set-env-vars="GEMINI_API_KEY=your-api-key" \
+     --allow-unauthenticated
    ```
 3. Copy the generated **Service URL**.
 
