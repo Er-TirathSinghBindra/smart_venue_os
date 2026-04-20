@@ -26,7 +26,18 @@ h1, h2, h3 { font-weight: 600; letter-spacing: -0.02em; }
 .toggle-btn.active { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: #fff; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
 .dashboard-grid { display: grid; gap: 1.5rem; }
 .staff-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-.attendee-grid { grid-template-columns: 1fr; max-width: 600px; margin: 0 auto; }
+.attendee-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; max-width: 600px; margin: 0 auto; }
+
+@media (min-width: 1024px) {
+  .attendee-grid {
+    max-width: 1200px;
+    grid-template-columns: 1.5fr 1fr;
+    align-items: start;
+  }
+  .attendee-grid > div:first-child {
+    grid-row: span 2;
+  }
+}
 .status-badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.5rem; }
 .status-badge::before { content: ''; width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .status-clear { background: rgba(16, 185, 129, 0.1); color: var(--status-clear); border: 1px solid rgba(16, 185, 129, 0.2); }

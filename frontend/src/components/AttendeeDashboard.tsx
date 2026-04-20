@@ -85,7 +85,7 @@ export default function AttendeeDashboard() {
               <div key={item.id} className="data-row" style={{ padding: "0.75rem 0" }}>
                 <div>
                   <div style={{ fontWeight: 600 }}>{item.name}</div>
-                  <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>${item.price.toFixed(2)}</div>
+                  <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>₹{item.price.toFixed(2)}</div>
                 </div>
                 <button onClick={() => addToCart(item)} className="add-btn" style={{ background: "rgba(59, 130, 246, 0.2)", color: "var(--accent-blue)", border: "1px solid rgba(59, 130, 246, 0.4)", borderRadius: "8px", padding: "0.5rem 1rem", cursor: "pointer", fontWeight: 600 }}>
                   Add
@@ -102,14 +102,14 @@ export default function AttendeeDashboard() {
               <div key={item.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.9rem" }}>
                 <span>{item.quantity}x {item.name}</span>
                 <div style={{ display: "flex", gap: "1rem" }}>
-                  <span>${(item.price * item.quantity).toFixed(2)}</span>
+                  <span>₹{(item.price * item.quantity).toFixed(2)}</span>
                   <button onClick={() => removeFromCart(item.id)} style={{ background: "none", border: "none", color: "var(--status-cong)", cursor: "pointer", padding: 0 }}>Remove</button>
                 </div>
               </div>
             ))}
             <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "1rem", marginTop: "1rem", fontSize: "1.2rem" }}>
               <span>Total:</span>
-              <span>${cartTotal.toFixed(2)}</span>
+              <span>₹{cartTotal.toFixed(2)}</span>
             </div>
             
             <button 
@@ -162,7 +162,7 @@ export default function AttendeeDashboard() {
 
   return (
     <div className="attendee-grid">
-      <div style={{ marginBottom: "1rem" }}>
+      <div>
         <VenueMap mode="attendee" concessionsData={concessions} />
       </div>
 
