@@ -150,9 +150,10 @@ The project is architected for rapid deployment to Google Cloud Run.
 ### 3. Frontend Deployment
 1. Update `frontend/src/config.ts` with your live **Backend Service URL**.
 2. Navigate to the `frontend/` directory.
-3. Deploy to Cloud Run (The .env.production file will be automatically used during the build):
+3. Deploy to Cloud Run:
    ```powershell
-   gcloud run deploy smartvenue-frontend --source . --region us-central1 --allow-unauthenticated
+   gcloud run deploy smartvenue-frontend --source . --region us-central1 --allow-unauthenticated `
+     --set-env-vars="NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyB-ETVlhWM9_WE9Osaq2l7t2SwDoJ35bx4"
    ```
 
 ## 🛠️ Local Development
